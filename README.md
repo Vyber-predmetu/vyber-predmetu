@@ -10,4 +10,4 @@ This project is a web application where teachers offer elective subjects and stu
 
 ## Documentation
 
-- Database Schema
+- [Database docs](database_docs.md)
