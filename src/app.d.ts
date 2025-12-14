@@ -1,4 +1,3 @@
-import type { Database } from '$lib/database.types';
 import type { Session, User } from '@supabase/supabase-js';
 import { SupabaseClient } from '@supabase/supabase-js';
 declare global {
