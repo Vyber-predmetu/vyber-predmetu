@@ -1,6 +1,6 @@
 <script lang="ts">
     import { enhance } from '$app/forms'
-    import { send } from 'process';
+    import { onMount } from 'svelte'
     import type { ActionData } from './$types'
 	import { error } from '@sveltejs/kit';
 
@@ -8,7 +8,16 @@
 
     let step: 'email' | 'otp' = 'email'
     let email = ''
+    let token = ''
     let loading = false
+
+    onMount(() => {
+        try {
+            const stored = localStorage.getItem('otp_email')
+            if (stored) email = stored
+        } catch (e) {
+        }
+    })
 </script>
 
 <article>
@@ -25,9 +34,10 @@
                     loading = false
 
                     if (result.type === 'success'){
+                        try { localStorage.setItem('otp_email', email) } catch (e) {}
                         step = 'otp'
                     }
-                    
+
                     await update();
                 }
             }}
@@ -59,6 +69,18 @@
         <form
             method="POST"
             action="?/verifyOtp"
+            on:submit={() => {
+                try {
+                    const hidden = document.querySelector('input[name="email"]') as HTMLInputElement
+                    const stored = (email && email.trim()) || (localStorage.getItem('otp_email') || '')
+                    if (hidden) {
+                        hidden.value = stored
+                    }
+                    console.debug('verify form submit - email value set to', stored)
+                } catch (e) {
+                    console.debug('verify submit: could not set hidden email', e)
+                }
+            }}
             use:enhance={() => {
                 loading = true
 
@@ -68,33 +90,38 @@
                 }
             }}
         >
-            <input type="hidden" name="email" value={email}>
+            <input type="hidden" name="email" bind:value={email}>
 
             <label>
                 6místný kód:
                 <input 
                     type="text" 
                     name="token" 
+                    bind:value={token}
                     required 
                     maxlength="6"
-                    minlength="6"
-                    pattern="[0-9]{6}"
+                    inputmode="numeric"
                     placeholder="123456"
                     disabled={loading}
                     autocomplete="one-time-code"
+                    on:input={() => { token = token.replace(/\D/g, '').slice(0,6) }}
                 />
             </label>
+
+            {#if token && token.length !== 6}
+                <p class="error">Kód musí obsahovat přesně 6 číslic.</p>
+            {/if}
             {#if form?.error}
                 <p class="error">{form.error}</p>
             {/if}
             <section class="button-group">
-                <button type="submit" disabled={loading}>
+                <button type="submit" disabled={loading || token.length !== 6}>
                     {loading ? 'Ověřuji...' : 'Přihlásit se'}
                 </button>
         
                 <button 
                     type="button" 
-                    on:click={() => { step = 'email'; form = null }}
+                    on:click={() => { step = 'email'; form = null; token = ''; try { localStorage.removeItem('otp_email') } catch (e) {} }}
                     disabled={loading}
                     class="secondary"
                 >
