@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invalidate, goto } from '$app/navigation'
-  import type { PageData } from './$types'
+  import type { PageData } from './$types.d.ts'
 
   export let data: PageData
 
@@ -46,4 +46,20 @@
       {loggingOut ? 'Odhlášuji...' : 'Odhlásit se'}
     </button>
   </div>
+
+  {#if data.canVote}
+    <div class="voting-cta">
+      <button type="button" on:click={() => goto('/hlasovani')}>Zvolit předměty</button>
+      <p>
+        Hlasování je otevřeno do
+        {data.votingWindow?.voting_end
+          ? new Date(data.votingWindow.voting_end).toLocaleString('cs-CZ')
+          : 'neznámý konec'}
+      </p>
+    </div>
+  {:else if data.votingMessage}
+    <div class="voting-info">
+      <p>{data.votingMessage}</p>
+    </div>
+  {/if}
 </div>
