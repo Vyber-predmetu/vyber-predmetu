@@ -10,13 +10,15 @@ export const load: PageServerLoad = async ({ parent }) => {
     throw redirect(303, '/auth/login')
   }
 
-  // Ověření hlasovacího práva studenta podle user_roles
   const supabase = getServiceClient()
   let canVote = false
   let votingWindow = null
   let votingMessage = ''
 
-  // Získání uživatele podle emailu
+  if (!user || !user.email) {
+    return { user, canVote: false, votingMessage: 'Uživatel nenalezen.' }
+  }
+
   const { data: dbUser, error: dbUserError } = await supabase
     .from('users')
     .select('id, graduation_year, email')
@@ -27,9 +29,6 @@ export const load: PageServerLoad = async ({ parent }) => {
     return { user, canVote: false, votingMessage: 'Uživatel nenalezen.' }
   }
 
-
-
-  // Získání všech user_roles a všech roles
   const { data: userRolesRaw, error: userRolesRawError } = await supabase
     .from('user_roles')
     .select('*')
@@ -43,23 +42,18 @@ export const load: PageServerLoad = async ({ parent }) => {
   console.log('DEBUG: allRoles', allRoles)
   if (allRolesError) console.log('DEBUG: allRolesError', allRolesError)
 
-  // Ověření role studenta ručně
   const studentRole = allRoles?.find(r => r.role_name === 'student')
   const hasStudentRole = !!userRolesRaw?.some(ur => ur.role_id === studentRole?.id)
   if (!hasStudentRole) {
     return { user, canVote: false, votingMessage: 'Pouze studenti mohou hlasovat.' }
   }
 
-  // Vypočítat ročník studenta podle začátku školního roku (září)
   const now = new Date();
   const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth(); // 0 = leden, 8 = září
-  let grade;
-  if (currentMonth >= 8) { // září až prosinec
-    grade = dbUser.graduation_year - currentYear + 1;
-  } else { // leden až srpen
-    grade = dbUser.graduation_year - currentYear;
-  }
+  const currentMonth = now.getMonth();
+  const schoolYear = currentMonth >= 8 ? currentYear : currentYear - 1;
+  let grade = dbUser.graduation_year - schoolYear + 1;
+  console.log('DEBUG: graduation_year:', dbUser.graduation_year, 'currentYear:', currentYear, 'currentMonth:', currentMonth, 'schoolYear:', schoolYear, 'calculated grade:', grade);
 
   if (grade < 1 || grade > 3) {
     return { user, canVote: false, votingMessage: 'Čtvrtý ročník nehlasuje.' }
@@ -73,20 +67,44 @@ export const load: PageServerLoad = async ({ parent }) => {
     .eq('target_year', targetYear)
     .single()
 
+  canVote = false;
+  votingWindow = null;
+  votingMessage = '';
   if (!window || windowError) {
-    return { user, canVote: false, votingMessage: 'Hlasovací okno není nastaveno.' }
+    votingMessage = 'Pro hlasování se vraťte později.';
+  } else {
+    const start = new Date(window.voting_start)
+    const end = new Date(window.voting_end)
+    if (now < start) {
+      votingMessage = `Pro hlasování se vraťte později. Hlasování se otevře ${start.toLocaleString('cs-CZ')}`
+    } else if (now > end) {
+      votingMessage = `Hlasování je ukončeno, pokud jste nestihli hlasovat, kontaktujte admina.`
+    }
+    if (now >= start && now <= end) {
+      canVote = true
+      votingWindow = window
+    }
   }
 
-  const start = new Date(window.voting_start)
-  const end = new Date(window.voting_end)
-  if (now < start) {
-    votingMessage = `Je příliš brzy, hlasování se otevře ${start.toLocaleString('cs-CZ')}`
-  } else if (now > end) {
-    votingMessage = `Hlasování je ukončeno, pokud jste nestihli hlasovat, kontaktujte admina.`
+  const { data: publishData, error: publishError } = await supabase
+    .from('subjects_published')
+    .select('published')
+    .single();
+  let published = false;
+  if (!publishError && publishData?.published) {
+    published = true;
   }
-  if (now >= start && now <= end) {
-    canVote = true
-    votingWindow = window
+
+  let subjects: Array<{ id: number; name: string; description: string; type_of_subject?: string; target_grade?: number }> = [];
+  if (published) {
+    const { data: subjectData, error: subjectError } = await supabase
+      .from('subjects')
+      .select('id, name, description, type_of_subject, target_grade')
+      .eq('target_grade', grade + 1)
+      .order('name', { ascending: true });
+    if (!subjectError && subjectData) {
+      subjects = subjectData;
+    }
   }
 
   return {
@@ -96,5 +114,7 @@ export const load: PageServerLoad = async ({ parent }) => {
     grade,
     targetYear,
     votingMessage,
+    published,
+    subjects,
   }
 }

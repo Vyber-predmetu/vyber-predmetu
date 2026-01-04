@@ -4,7 +4,10 @@
 
   export let data: PageData
 
+
   let loggingOut = false
+  let subjects = data.subjects ?? [];
+  let showMoreArr: boolean[] = Array(subjects.length).fill(false);
 
   async function handleLogout() {
     loggingOut = true
@@ -47,19 +50,45 @@
     </button>
   </div>
 
-  {#if data.canVote}
-    <div class="voting-cta">
-      <button type="button" on:click={() => goto('/hlasovani')}>Zvolit předměty</button>
-      <p>
-        Hlasování je otevřeno do
-        {data.votingWindow?.voting_end
-          ? new Date(data.votingWindow.voting_end).toLocaleString('cs-CZ')
-          : 'neznámý konec'}
-      </p>
-    </div>
-  {:else if data.votingMessage}
+  {#if !data.published}
     <div class="voting-info">
-      <p>{data.votingMessage}</p>
+      <p>Je příliš brzy, předměty nejsou zveřejněny.</p>
     </div>
+  {:else}
+    <div class="subjects-grid">
+      <h2>Předměty pro Váš ročník</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+        {#each subjects as subject, i (subject.id)}
+          <div class="subject-card" style="border: 1px solid #ccc; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <strong>{subject.name}</strong>
+            <div><em>{subject.type_of_subject}</em></div>
+            <div>
+              {#if subject.description.length > 120}
+                <span>{showMoreArr[i] ? subject.description : subject.description.slice(0, 120) + '...'}</span>
+                <button on:click={() => showMoreArr[i] = !showMoreArr[i]}>
+                  {showMoreArr[i] ? 'Skrýt' : 'Zobrazit více'}
+                </button>
+              {:else}
+                <span>{subject.description}</span>
+              {/if}
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+    {#if data.votingWindow}
+      <div class="voting-cta">
+        <button type="button" on:click={() => goto('/voting')} disabled={!data.canVote}>Zvolit předměty</button>
+        <p>
+          Hlasování je otevřeno do
+          {new Date(data.votingWindow.voting_end).toLocaleString('cs-CZ')}
+        </p>
+      </div>
+    {/if}
+    {#if data.votingMessage}
+      <div class="voting-info">
+        <p>{data.votingMessage}</p>
+      </div>
+    {/if}
   {/if}
 </div>

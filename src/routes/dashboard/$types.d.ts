@@ -2,7 +2,6 @@ export type PageData = {
   user: {
     id: number;
     email: string;
-    // další pole podle potřeby
   } | null;
   canVote?: boolean;
   votingWindow?: {
@@ -12,4 +11,12 @@ export type PageData = {
   grade?: number;
   targetYear?: number;
   votingMessage?: string;
+  published?: boolean;
+  subjects?: Array<{
+    id: number;
+    name: string;
+    description: string;
+    type_of_subject?: string;
+    target_grade?: number;
+  }>;
 };
