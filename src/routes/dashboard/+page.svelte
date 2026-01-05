@@ -78,7 +78,15 @@
     </div>
     {#if data.votingWindow}
       <div class="voting-cta">
-        <button type="button" on:click={() => goto('/voting')} disabled={!data.canVote}>Zvolit předměty</button>
+        {#if Array.isArray(data.subjectTypes) && data.subjectTypes.length > 0}
+          {#each data.subjectTypes as type}
+            <button type="button" on:click={() => goto(`/voting?type=${type}`)} disabled={!data.canVote}>
+              Zvolit {type.toLowerCase()}
+            </button>
+          {/each}
+        {:else}
+          <button type="button" on:click={() => goto('/voting')} disabled={!data.canVote}>Zvolit předměty</button>
+        {/if}
         <p>
           Hlasování je otevřeno do
           {new Date(data.votingWindow.voting_end).toLocaleString('cs-CZ')}

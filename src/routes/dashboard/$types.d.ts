@@ -19,4 +19,5 @@ export type PageData = {
     type_of_subject?: string;
     target_grade?: number;
   }>;
+    subjectTypes?: string[];
 };

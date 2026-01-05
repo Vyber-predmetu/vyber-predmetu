@@ -85,7 +85,7 @@ export const load: PageServerLoad = async ({ parent }) => {
       votingWindow = window
     }
   }
-
+  
   const { data: publishData, error: publishError } = await supabase
     .from('subjects_published')
     .select('published')
@@ -96,7 +96,15 @@ export const load: PageServerLoad = async ({ parent }) => {
   }
 
   let subjects: Array<{ id: number; name: string; description: string; type_of_subject?: string; target_grade?: number }> = [];
+  let subjectTypes: string[] = [];
   if (published) {
+    const { data: divisionRows, error: divisionError } = await supabase
+      .from('division_config')
+      .select('subject_type')
+      .eq('target_year', grade + 1);
+    if (!divisionError && divisionRows) {
+      subjectTypes = Array.from(new Set(divisionRows.map(row => row.subject_type)));
+    }
     const { data: subjectData, error: subjectError } = await supabase
       .from('subjects')
       .select('id, name, description, type_of_subject, target_grade')
@@ -116,5 +124,6 @@ export const load: PageServerLoad = async ({ parent }) => {
     votingMessage,
     published,
     subjects,
+    subjectTypes,
   }
 }
