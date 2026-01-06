@@ -54,6 +54,10 @@
     <div class="voting-info">
       <p>Je příliš brzy, předměty nejsou zveřejněny.</p>
     </div>
+  {:else if data.grade === 4}
+    <div class="voting-info">
+      <p>Čtvrťáci si již žádné předměty nevolí.</p>
+    </div>
   {:else}
     <div class="subjects-grid">
       <h2>Předměty pro Váš ročník</h2>
@@ -80,17 +84,23 @@
       <div class="voting-cta">
         {#if Array.isArray(data.subjectTypes) && data.subjectTypes.length > 0}
           {#each data.subjectTypes as type}
-            <button type="button" on:click={() => goto(`/voting?type=${type}`)} disabled={!data.canVote}>
-              Zvolit {type.toLowerCase()}
-            </button>
+            {#if !(data.alreadyVotedTypes && data.alreadyVotedTypes.includes(type))}
+              <button type="button" on:click={() => goto(`/voting?type=${type}&grade=${data.grade}`)} disabled={!data.canVote}>
+                Zvolit {type.toLowerCase()}
+              </button>
+            {:else}
+              <span style="color: #888; margin-left: 1em;">Již jste hlasoval(a) pro {type.toLowerCase()}.</span>
+            {/if}
           {/each}
         {:else}
           <button type="button" on:click={() => goto('/voting')} disabled={!data.canVote}>Zvolit předměty</button>
         {/if}
-        <p>
-          Hlasování je otevřeno do
-          {new Date(data.votingWindow.voting_end).toLocaleString('cs-CZ')}
-        </p>
+        {#if data.canVote}
+          <p>
+            Hlasování je otevřeno do
+            {new Date(data.votingWindow.voting_end).toLocaleString('cs-CZ')}
+          </p>
+        {/if}
       </div>
     {/if}
     {#if data.votingMessage}

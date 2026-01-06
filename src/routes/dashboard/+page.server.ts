@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ parent }) => {
   let canVote = false
   let votingWindow = null
   let votingMessage = ''
+  let alreadyVotedTypes: string[] = []
 
   if (!user || !user.email) {
     return { user, canVote: false, votingMessage: 'Uživatel nenalezen.' }
@@ -51,15 +52,34 @@ export const load: PageServerLoad = async ({ parent }) => {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-  const schoolYear = currentMonth >= 8 ? currentYear : currentYear - 1;
-  let grade = dbUser.graduation_year - schoolYear + 1;
-  console.log('DEBUG: graduation_year:', dbUser.graduation_year, 'currentYear:', currentYear, 'currentMonth:', currentMonth, 'schoolYear:', schoolYear, 'calculated grade:', grade);
+  let grade;
+  if (currentMonth >= 8) {
+    grade = currentYear + 1 - dbUser.graduation_year + 4;
+  } else {
+    grade = currentYear - dbUser.graduation_year + 4;
+  }
+  console.log('DEBUG: graduation_year:', dbUser.graduation_year, 'currentYear:', currentYear, 'currentMonth:', currentMonth, 'calculated grade:', grade);
 
-  if (grade < 1 || grade > 3) {
-    return { user, canVote: false, votingMessage: 'Čtvrtý ročník nehlasuje.' }
+  if (grade < 1 || grade > 4) {
+    return { user, canVote: false, votingMessage: 'Ročník mimo rozsah.' }
   }
 
-  const targetYear = grade + 1
+  let targetYear = null;
+  if (grade >= 1 && grade <= 3) {
+    targetYear = grade + 1;
+  }
+  if (grade === 4) {
+    return {
+      user: { ...user, id: user.id, db_id: dbUser.id },
+      canVote: false,
+      grade,
+      votingMessage: 'Čtvrťáci si již žádné předměty nevolí.',
+      published: false,
+      subjects: [],
+      subjectTypes: [],
+      alreadyVotedTypes: [],
+    };
+  }
 
   const { data: window, error: windowError } = await supabase
     .from('voting_window')
@@ -113,10 +133,35 @@ export const load: PageServerLoad = async ({ parent }) => {
     if (!subjectError && subjectData) {
       subjects = subjectData;
     }
+    alreadyVotedTypes = [];
+    for (const type of subjectTypes) {
+      const { data: typeSubjects, error: typeSubjectsError } = await supabase
+        .from('subjects')
+        .select('id')
+        .eq('type_of_subject', type)
+        .eq('target_grade', grade + 1);
+      if (typeSubjectsError) continue;
+      const subjectIds = typeSubjects.map(s => s.id);
+      if (!subjectIds.length) continue;
+      // Check if user already voted for any of these subjects
+      const { data: votes, error: votesError } = await supabase
+        .from('preferential_round')
+        .select('id')
+        .eq('student_id', dbUser.id)
+        .in('subject_id', subjectIds)
+        .limit(1);
+      if (!votesError && votes && votes.length > 0) {
+        alreadyVotedTypes.push(type);
+      }
+    }
+    if (subjectTypes.length > 0 && alreadyVotedTypes.length === subjectTypes.length) {
+      canVote = false;
+      votingMessage = 'Již jste hlasoval(a) ve všech kategoriích.';
+    }
   }
 
   return {
-    user,
+    user: { ...user, id: user.id, db_id: dbUser.id },
     canVote,
     votingWindow,
     grade,
@@ -125,5 +170,6 @@ export const load: PageServerLoad = async ({ parent }) => {
     published,
     subjects,
     subjectTypes,
+    alreadyVotedTypes,
   }
 }

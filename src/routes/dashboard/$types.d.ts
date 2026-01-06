@@ -20,4 +20,4 @@ export type PageData = {
     target_grade?: number;
   }>;
     subjectTypes?: string[];
-};
+  alreadyVotedTypes?: string[]};
