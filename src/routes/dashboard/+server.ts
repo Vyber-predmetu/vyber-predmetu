@@ -1,9 +1,9 @@
-import { json } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
 import { getServiceClient } from '$lib/supabase-service.server';
 
-export const GET = async ({ url }) => {
+export const GET: RequestHandler = async ({ url }) => {
   const supabase = getServiceClient();
-  const type = url.searchParams.get('type'); // 'OSE' or 'MVOP'
+  const type = url.searchParams.get('type'); 
   const grade = Number(url.searchParams.get('grade'));
   console.log('DEBUG: GET /dashboard type:', type, 'grade:', grade);
   if (!type || !grade) {
@@ -20,13 +20,12 @@ export const GET = async ({ url }) => {
   return json({ subjects });
 };
 
-export const POST = async ({ request }) => {
+export const POST: RequestHandler = async ({ request }) => {
   const supabase = getServiceClient();
   const body = await request.json();
-  const { student_id, preferences } = body; // preferences: [{ subject_id, subject_order }]
+  const { student_id, preferences } = body;
   console.log('DEBUG: POST /dashboard student_id:', student_id, 'type:', typeof student_id);
   if (!student_id || !Array.isArray(preferences)) return json({ error: 'Missing data' }, { status: 400 });
-  // Insert all preferences
   function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);

@@ -1,9 +1,9 @@
 
 import { redirect } from '@sveltejs/kit'
 import { getServiceClient } from '$lib/supabase-service.server'
-import type { PageServerLoad } from './$types'
+import type { ServerLoad } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ parent }) => {
+export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> }) => {
   const { session, user } = await parent()
 
   if (!session) {
