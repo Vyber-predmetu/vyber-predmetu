@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
-import { PUBLIC_SUPABASE_URL } from '$env/static/public'
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private'
+import { env as publicEnv } from '$env/dynamic/public'
+import { env as privateEnv } from '$env/dynamic/private'
 
-if (!SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY env variable')
+export const getServiceClient = () => {
+    if (!privateEnv.SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY env variable')
+    }
+    return createClient(publicEnv.PUBLIC_SUPABASE_URL, privateEnv.SUPABASE_SERVICE_ROLE_KEY)
 }
-
-export const getServiceClient = () =>
-    createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)

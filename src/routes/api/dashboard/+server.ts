@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { getServiceClient } from '$lib/supabase-service.server';
 
-// API endpoint to fetch subjects by type and grade
 export const GET = async ({ url }) => {
   const supabase = getServiceClient();
   const type = url.searchParams.get('type'); // 'OSE' or 'MVOP'
@@ -55,7 +54,6 @@ export const POST = async ({ request }) => {
   const subjectIds = allSubjects.map(s => s.id);
   if (!subjectIds.length) return json({ error: 'No subjects found for this type/grade.' }, { status: 400 });
 
-  // Check if user already voted for any of these subjects
   const { data: existingVotes, error: existingVotesError } = await supabase
     .from('preferential_round')
     .select('id')
@@ -66,7 +64,6 @@ export const POST = async ({ request }) => {
     return json({ error: 'Už jste hlasoval(a) pro tuto kategorii.' }, { status: 400 });
   }
 
-  // Insert all preferences
   function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
