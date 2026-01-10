@@ -11,7 +11,6 @@ export const load: ServerLoad = async ({ parent }) => {
 
 	const supabase = getServiceClient()
 
-	// Najít uživatele v databázi
 	const { data: dbUser, error: dbUserError } = await supabase
 		.from('users')
 		.select('id')
@@ -22,7 +21,6 @@ export const load: ServerLoad = async ({ parent }) => {
 		throw redirect(303, '/auth/login')
 	}
 
-	// Načíst všechny role uživatele
 	const { data: userRoles, error: rolesError } = await supabase
 		.from('user_roles')
 		.select('role_id, roles(id, role_name)')
@@ -32,7 +30,6 @@ export const load: ServerLoad = async ({ parent }) => {
 		throw redirect(303, '/auth/login')
 	}
 
-	// Pokud má jen jednu roli, přesměrovat rovnou
 	if (userRoles.length === 1) {
 		const roleName = (userRoles[0].roles as any)?.role_name
 		if (roleName === 'student') {
@@ -44,7 +41,6 @@ export const load: ServerLoad = async ({ parent }) => {
 		}
 	}
 
-	// Připravit seznam rolí
 	const roles = userRoles.map((ur) => ({
 		id: (ur.roles as any)?.id,
 		name: (ur.roles as any)?.role_name
