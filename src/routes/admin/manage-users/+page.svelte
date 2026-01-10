@@ -41,7 +41,11 @@
 	}
 
 	function updateCell(row: number, col: string, value: string) {
-		users[row][col] = value;
+		if (col === 'roles') {
+			users[row][col] = value.split(',').map(r => r.trim()).filter(Boolean);
+		} else {
+			users[row][col] = value;
+		}
 		editingCell = null;
 	}
 
@@ -66,7 +70,6 @@
 
 			result = { success: data.updated, errors: data.errors || [] };
 			
-			// Znovu načíst data po uložení
 			await loadUsers();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Chyba při ukládání';
@@ -120,7 +123,6 @@
 			result = { success: data.deleted, errors: data.errors || [] };
 			selectedUsers = new Set();
 			
-			// Znovu načíst data
 			await loadUsers();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Chyba při mazání';
@@ -129,7 +131,6 @@
 		}
 	}
 
-	// Načíst uživatele při načtení stránky
 	$effect(() => {
 		loadUsers();
 	});
@@ -191,7 +192,7 @@
 							<th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Email</th>
 							<th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Jméno</th>
 							<th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Příjmení</th>
-							<th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Role</th>
+							<th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Role (oddělené čárkou)</th>
 							<th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Třída</th>
 							<th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Maturita</th>
 						</tr>
@@ -207,7 +208,7 @@
 										style="cursor: pointer;"
 									/>
 								</td>
-								{#each ['email', 'first_name', 'last_name', 'role_name', 'class_letter', 'graduation_year'] as col}
+								{#each ['email', 'first_name', 'last_name', 'roles', 'class_letter', 'graduation_year'] as col}
 									<td 
 										style="padding: 0.5rem; border: 1px solid #ddd; cursor: pointer; position: relative;"
 										onclick={() => startEdit(i, col)}
@@ -215,7 +216,7 @@
 										{#if editingCell?.row === i && editingCell?.col === col}
 											<input
 												type="text"
-												value={user[col] || ''}
+												value={col === 'roles' ? (user[col] || []).join(', ') : (user[col] || '')}
 												onblur={(e) => updateCell(i, col, e.currentTarget.value)}
 												onkeydown={(e) => {
 													if (e.key === 'Enter') {
@@ -228,7 +229,10 @@
 											/>
 										{:else}
 											<span style="display: block; min-height: 1.5rem;">
-												{user[col] || '—'}
+												{col === 'roles' 
+													? (user[col] && Array.isArray(user[col]) ? user[col].join(', ') : '—')
+													: (user[col] || '—')
+												}
 											</span>
 										{/if}
 									</td>

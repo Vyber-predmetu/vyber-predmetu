@@ -70,10 +70,13 @@
 				<li><strong>email</strong> - email uživatele (povinné)</li>
 				<li><strong>first_name</strong> - křestní jméno (povinné)</li>
 				<li><strong>last_name</strong> - příjmení (povinné)</li>
-				<li><strong>role</strong> - "student", "teacher" nebo "admin" (povinné)</li>
+				<li><strong>role</strong> - role oddělené čárkou: "student", "teacher", "admin" nebo např. "admin, teacher" (povinné)</li>
 				<li><strong>class_letter</strong> - třída (jen pro studenty): A, B, C, K, Ga, Gb</li>
 				<li><strong>graduation_year</strong> - rok maturity (jen pro studenty)</li>
 			</ul>
+			<p style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">
+				💡 Pro více rolí použij čárku, např.: "admin, teacher" nebo "student, teacher"
+			</p>
 		</div>
 
 		<button 

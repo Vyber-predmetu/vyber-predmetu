@@ -119,18 +119,26 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				const email = normalizedRow.email;
 				const first_name = normalizedRow.first_name;
 				const last_name = normalizedRow.last_name;
-				const role = normalizedRow.role;
+				const rolesString = normalizedRow.role;
 				const class_letter = normalizedRow.class_letter;
 				const graduation_year = normalizedRow.graduation_year;
 
-				if (!['student', 'teacher', 'admin'].includes(role)) {
-					errors.push(`Řádek ${rowNum}: Neplatná role "${role}"`);
+				const roles = rolesString.split(',').map((r: string) => r.trim()).filter(Boolean);
+				
+				if (roles.length === 0) {
+					errors.push(`Řádek ${rowNum}: Chybí role`);
 					continue;
 				}
 
-				const roleId = rolesMap.get(role);
-				if (!roleId) {
-					errors.push(`Řádek ${rowNum}: Role "${role}" nebyla nalezena v databázi`);
+				const invalidRoles = roles.filter((r: string) => !['student', 'teacher', 'admin'].includes(r));
+				if (invalidRoles.length > 0) {
+					errors.push(`Řádek ${rowNum}: Neplatné role "${invalidRoles.join(', ')}"`);
+					continue;
+				}
+
+				const roleIds = roles.map((r: string) => rolesMap.get(r)).filter(Boolean);
+				if (roleIds.length !== roles.length) {
+					errors.push(`Řádek ${rowNum}: Některé role nebyly nalezeny v databázi`);
 					continue;
 				}
 
@@ -143,7 +151,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					last_name: last_name
 				};
 
-				if (role === 'student') {
+				if (roles.includes('student')) {
 					if (class_letter) {
 						userData.class_letter = class_letter;
 					}
@@ -161,15 +169,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					continue;
 				}
 
-				const userRoleId = crypto.randomUUID();
+				const userRoleInserts = roleIds.map((roleId: string) => ({
+					id: crypto.randomUUID(),
+					user_id: userId,
+					role_id: roleId
+				}));
 
 				const { error: userRoleError } = await supabase
 					.from('user_roles')
-					.insert({
-						id: userRoleId,
-						user_id: userId,
-						role_id: roleId
-					});
+					.insert(userRoleInserts);
 
 				if (userRoleError) {
 					await supabase.from('users').delete().eq('id', userId);
@@ -278,7 +286,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			last_name: u.last_name,
 			class_letter: u.class_letter || '',
 			graduation_year: u.graduation_year || '',
-			role_name: (u.user_roles[0]?.roles as any)?.role_name || ''
+			roles: u.user_roles?.map((ur: any) => ur.roles?.role_name).filter(Boolean) || []
 		})) || [];
 
 		return json({ users: formattedUsers });
@@ -294,16 +302,26 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 export const PATCH: RequestHandler = async ({ request, locals }) => {
 	try {
 		const { session, user } = await locals.safeGetSession();
-		if (!session || !user?.id) {
+		if (!session || !user?.email) {
 			return json({ error: 'Nejste přihlášen' }, { status: 401 });
 		}
 
 		const supabase = getServiceClient();
 
+		const { data: dbUser } = await supabase
+			.from('users')
+			.select('id')
+			.eq('email', user.email)
+			.single();
+
+		if (!dbUser) {
+			return json({ error: 'Uživatel nenalezen v databázi' }, { status: 403 });
+		}
+
 		const { data: userRoles } = await supabase
 			.from('user_roles')
 			.select('role_id, roles(role_name)')
-			.eq('user_id', user.id);
+			.eq('user_id', dbUser.id);
 
 		const isAdmin = userRoles?.some((ur) => (ur.roles as any)?.role_name === 'admin');
 
@@ -344,21 +362,24 @@ export const PATCH: RequestHandler = async ({ request, locals }) => {
 					continue;
 				}
 
-				if (userData.role_name) {
-					const roleId = roleMap.get(userData.role_name);
-					if (roleId) {
-						await supabase
-							.from('user_roles')
-							.delete()
-							.eq('user_id', userData.id);
+				if (userData.roles && Array.isArray(userData.roles)) {
+					await supabase
+						.from('user_roles')
+						.delete()
+						.eq('user_id', userData.id);
 
+					const roleInserts = userData.roles
+						.filter((roleName: string) => roleMap.has(roleName))
+						.map((roleName: string) => ({
+							id: crypto.randomUUID(),
+							user_id: userData.id,
+							role_id: roleMap.get(roleName)!
+						}));
+
+					if (roleInserts.length > 0) {
 						await supabase
 							.from('user_roles')
-							.insert({
-								id: crypto.randomUUID(),
-								user_id: userData.id,
-								role_id: roleId
-							});
+							.insert(roleInserts);
 					}
 				}
 
