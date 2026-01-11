@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invalidate, goto } from '$app/navigation'
-  import type { PageData } from './$types.d.ts'
+  import type { PageData } from './$types.js'
 
   export let data: PageData
 

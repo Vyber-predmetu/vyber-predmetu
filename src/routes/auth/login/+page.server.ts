@@ -174,6 +174,36 @@ export const actions: Actions = {
             return fail(403, { error: 'Účet není povolený.' })
         }
 
-        throw redirect(303, '/dashboard')
+        const { data: userRoles, error: rolesError } = await svc
+            .from('user_roles')
+            .select('role_id, roles(role_name)')
+            .eq('user_id', existingUser.id)
+
+        if (rolesError) {
+            console.error('Error fetching user roles:', rolesError)
+            await supabase.auth.signOut()
+            return fail(500, { error: 'Chyba při načítání rolí.' })
+        }
+
+        if (!userRoles || userRoles.length === 0) {
+            await supabase.auth.signOut()
+            return fail(403, { error: 'Uživatel nemá přiřazenou žádnou roli.' })
+        }
+
+        if (userRoles.length > 1) {
+            throw redirect(303, '/auth/select-role')
+        }
+
+        const roleName = (userRoles[0].roles as any)?.role_name
+        
+        if (roleName === 'student') {
+            throw redirect(303, '/student')
+        } else if (roleName === 'teacher') {
+            throw redirect(303, '/teacher')
+        } else if (roleName === 'admin') {
+            throw redirect(303, '/admin')
+        }
+
+        throw redirect(303, '/student')
     },
 }

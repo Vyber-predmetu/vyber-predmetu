@@ -143,7 +143,6 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
       if (typeSubjectsError) continue;
       const subjectIds = typeSubjects.map(s => s.id);
       if (!subjectIds.length) continue;
-      // Check if user already voted for any of these subjects
       const { data: votes, error: votesError } = await supabase
         .from('preferential_round')
         .select('id')

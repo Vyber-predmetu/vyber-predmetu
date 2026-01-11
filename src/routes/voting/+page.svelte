@@ -32,7 +32,7 @@
           alreadyVoted = true;
           error = 'Již jste hlasoval(a) v této kategorii.';
           setTimeout(() => {
-            goto(`/dashboard?error=alreadyVoted`);
+            goto(`/student?error=alreadyVoted`);
           }, 1500);
           return;
         }
@@ -125,12 +125,12 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(async () => {
           await tick();
-          goto('/dashboard?error=alreadyVoted');
+          goto('/student?error=alreadyVoted');
         }, 1500);
         return;
       }
       if (data.success) {
-        goto('/dashboard');
+        goto('/student');
       } else {
         error = data.error || 'Failed to save preferences.';
       }
