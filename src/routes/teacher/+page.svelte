@@ -1,19 +1,85 @@
-<script lang="ts">
-	interface Props {
-		data: {
-			user: any;
-		};
-	}
 
-	let { data }: Props = $props();
+<script lang="ts">
+	import { page } from '$app/stores';
+	let { data, form } = $props();
+	let name = $state('');
+	let description = $state('');
+	let target_grade = $state('');
+	let type_of_subject = $state('');
+
+	let submissionWindow = data.submissionWindow;
+	let now = $derived(() => new Date());
+	let start = $derived(() => submissionWindow?.submissions_start ? new Date(submissionWindow.submissions_start) : null);
+	let end = $derived(() => submissionWindow?.submissions_end ? new Date(submissionWindow.submissions_end) : null);
+	let canSubmit = $derived(() => start() && end() && now() >= start() && now() <= end());
+
+
+	function getFeedback(start: Date | null, end: Date | null, now: Date): string {
+		if (!start || !end) return 'Není nastaveno období pro posílání předmětů.';
+		if (now < start) return `Posílání předmětů se otevře ${start.toLocaleString('cs-CZ')}`;
+		if (now > end) return 'Posílání předmětů je uzavřeno. Pokud jste nestihli, kontaktujte administrátora.';
+		return `Posílání předmětů bude otevřené do ${end.toLocaleString('cs-CZ')}`;
+	}
 </script>
 
 <div>
 	<h1>Učitelský Dashboard</h1>
 	<p>Vítejte, {data.user?.email}</p>
 
-	<div>
-		<h2>Funkce v přípravě</h2>
-		<p>Učitelský dashboard bude brzy k dispozici.</p>
+	<div >
+		<strong>{getFeedback(start(), end(), now())}</strong>
 	</div>
+
+	{#if canSubmit()}
+		<form method="POST" action="?/addSubject" class="mb-6 space-y-4">
+			<div>
+				<label for="name">Název předmětu</label>
+				<input id="name" name="name" bind:value={name} required class="input" />
+			</div>
+			<div>
+				<label for="description">Popis předmětu</label>
+				<textarea id="description" name="description" bind:value={description} required class="input"></textarea>
+			</div>
+			<div>
+				<label for="target_grade">Ročník</label>
+				<select id="target_grade" name="target_grade" bind:value={target_grade} required class="input">
+					<option value="" disabled selected>Vyberte ročník</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+			</div>
+			<div>
+				<label for="type_of_subject">Typ předmětu</label>
+				<select id="type_of_subject" name="type_of_subject" bind:value={type_of_subject} required class="input">
+					<option value="" disabled selected>Vyberte typ</option>
+					<option value="OSE">OSE</option>
+					<option value="MVOP">MVOP</option>
+				</select>
+			</div>
+			{#if form?.error}
+				<div class="text-red-600">{form.error}</div>
+			{/if}
+			{#if form?.success}
+				<div class="text-green-600">Předmět byl úspěšně přidán.</div>
+			{/if}
+			<button type="submit" class="btn" name="addSubject">Přidat předmět</button>
+		</form>
+	{/if}
+
+	<h2>Vaše předměty</h2>
+	{#if data.subjects?.length}
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+			{#each data.subjects as subject}
+				<div class="p-4 border rounded bg-white shadow">
+					<div class="font-bold">{subject.name}</div>
+					<div>{subject.description}</div>
+					<div>Ročník: {subject.target_grade}</div>
+					<div>Typ: {subject.type_of_subject}</div>
+				</div>
+			{/each}
+		</div>
+	{:else}
+		<p>Nemáte zatím žádné předměty.</p>
+	{/if}
 </div>
