@@ -1,6 +1,7 @@
 
 import { redirect } from '@sveltejs/kit'
 import { getServiceClient } from '$lib/supabase-service.server'
+import { getServiceClient } from '$lib/supabase-service.server'
 import type { ServerLoad } from '@sveltejs/kit';
 
 export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> }) => {
@@ -32,19 +33,20 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 
   const { data: userRolesRaw, error: userRolesRawError } = await supabase
     .from('user_roles')
-    .select('*')
+    .select('role_id, roles(role_name)')
     .eq('user_id', dbUser.id)
-  console.log('DEBUG: userRolesRaw', userRolesRaw)
-  if (userRolesRawError) console.log('DEBUG: userRolesRawError', userRolesRawError)
+  const hasStudentRole = userRolesRaw?.some((ur) => (ur.roles as any)?.role_name === 'student');
+  if (!hasStudentRole) {
+    throw redirect(303, '/auth/login')
+  }
 
   const { data: allRoles, error: allRolesError } = await supabase
     .from('roles')
-    .select('*')
+    .select('*');
   console.log('DEBUG: allRoles', allRoles)
   if (allRolesError) console.log('DEBUG: allRolesError', allRolesError)
 
   const studentRole = allRoles?.find(r => r.role_name === 'student')
-  const hasStudentRole = !!userRolesRaw?.some(ur => ur.role_id === studentRole?.id)
   if (!hasStudentRole) {
     return { user, canVote: false, votingMessage: 'Pouze studenti mohou hlasovat.' }
   }
