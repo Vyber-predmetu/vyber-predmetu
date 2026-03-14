@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 	import type { SortedSubject } from '$lib/subject-sorting';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		data: {
@@ -11,7 +12,9 @@
 	let { data }: Props = $props();
 
 	let loading = $state(false);
+	let initialLoading = $state(true);
 	let error = $state<string | null>(null);
+	let multiColumnCategories = $state<string[]>([]);
 	let result = $state<{
 		ranking: Record<string, SortedSubject[]>;
 		columns: Record<string, SortedSubject[]>;
@@ -40,10 +43,35 @@
 		return result?.subjectNames[id] ?? id;
 	}
 
+	async function loadSavedDivision() {
+		try {
+			const res = await fetch('/admin/division');
+			const json = await res.json();
+			if (res.ok && !json.empty && json.ranking) {
+				result = json;
+				multiColumnCategories = Object.keys(json.multiColumnCategories ?? {});
+			}
+		} catch {
+			// silently fail — no saved data
+		} finally {
+			initialLoading = false;
+		}
+	}
+
+	onMount(loadSavedDivision);
+
+	// Reload saved division when navigating back from editor
+	afterNavigate(({ from }) => {
+		if (from?.url.pathname.includes('division-table')) {
+			loadSavedDivision();
+		}
+	});
+
 	async function runDivision() {
 		loading = true;
 		error = null;
 		result = null;
+		multiColumnCategories = [];
 
 		try {
 			const res = await fetch('/admin/division', { method: 'POST' });
@@ -55,6 +83,7 @@
 			}
 
 			result = json;
+			multiColumnCategories = Object.keys(json.multiColumnCategories ?? {});
 		} catch (e) {
 			error = 'Nepodařilo se spojit se serverem';
 		} finally {
@@ -142,6 +171,20 @@
 
 			<!-- TABLE 2: Columns -->
 			<h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Rozdělení do sloupců</h2>
+
+			{#if multiColumnCategories.length > 0}
+				<div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;">
+					{#each multiColumnCategories as cat}
+						<button
+							onclick={() => goto(`/admin/division-table?category=${cat}`)}
+							style="padding: 0.5rem 1rem; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 0.85rem;"
+						>
+							Editovat rozřazení – {formatCategory(cat)}
+						</button>
+					{/each}
+				</div>
+			{/if}
+
 			<div style="display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
 				{#each Object.entries(result.columns) as [columnKey, subjects]}
 					<div style="border: 1px solid #bcd; border-radius: 8px; overflow: hidden;">
