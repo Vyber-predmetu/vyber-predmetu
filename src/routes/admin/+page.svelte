@@ -171,8 +171,7 @@
 		</div>
 
 		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px;">
-			<h2 style="margin-bottom: 0.5rem;">Rozdělení studentů do předmětů</h2>
-			<p style="margin-bottom: 1rem; color: #666;">Spustí algoritmus pro rozdělení studentů do předmětů podle preferencí.</p>
+			<h2 style="margin-bottom: 0.5rem;">Rozdělení předmětů podle popularity</h2>
 			<button
 				onclick={runDivision}
 				disabled={loading}
