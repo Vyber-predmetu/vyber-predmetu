@@ -1,9 +1,10 @@
-import type { PageServerLoad } from './$types';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 import { getServiceClient } from '$lib/supabase-service.server';
 import { studentSort } from '$lib/subject-sorting';
 import type { PreferentialRound, DivisionConfig, Subject } from '$lib/subject-sorting';
 
-export const load: PageServerLoad = async () => {
+export const POST: RequestHandler = async () => {
 	const supabase = getServiceClient();
 
 	const [prefRoundRes, divConfigRes, subjectsRes, subjectNamesRes] = await Promise.all([
@@ -13,10 +14,10 @@ export const load: PageServerLoad = async () => {
 		supabase.from('subjects').select('id, name')
 	]);
 
-	if (prefRoundRes.error) throw new Error(`preferential_round: ${prefRoundRes.error.message}`);
-	if (divConfigRes.error) throw new Error(`division_config: ${divConfigRes.error.message}`);
-	if (subjectsRes.error) throw new Error(`subjects: ${subjectsRes.error.message}`);
-	if (subjectNamesRes.error) throw new Error(`subject names: ${subjectNamesRes.error.message}`);
+	if (prefRoundRes.error) return json({ error: prefRoundRes.error.message }, { status: 500 });
+	if (divConfigRes.error) return json({ error: divConfigRes.error.message }, { status: 500 });
+	if (subjectsRes.error) return json({ error: subjectsRes.error.message }, { status: 500 });
+	if (subjectNamesRes.error) return json({ error: subjectNamesRes.error.message }, { status: 500 });
 
 	const result = studentSort(
 		prefRoundRes.data as PreferentialRound[],
@@ -24,11 +25,10 @@ export const load: PageServerLoad = async () => {
 		subjectsRes.data as Subject[]
 	);
 
-	// build subject name lookup for UI display
 	const subjectNames: Record<string, string> = {};
 	for (const s of subjectNamesRes.data) {
 		subjectNames[s.id] = s.name;
 	}
 
-	return { ...result, subjectNames };
+	return json({ ...result, subjectNames });
 };

@@ -33,11 +33,23 @@ export function countSubjectsPerCategory(subjects: Subject[]): Map<CategoryKey, 
 	return counts;
 }
 
+export type SortedSubject = {
+	subject_id: string;
+	points: number;
+};
+
+export type SortResult = {
+	// Table 1: subjects sorted by popularity per category
+	ranking: Record<string, SortedSubject[]>;
+	// Table 2: subjects sorted + divided into columns (with category prefix)
+	columns: Record<string, SortedSubject[]>;
+};
+
 export function studentSort(
 	preferentialRound: PreferentialRound[],
 	divisionConfig: DivisionConfig[],
 	subjects: Subject[]
-) {
+): SortResult {
 	// count subjects per category once
 	const subjectCounts = countSubjectsPerCategory(subjects);
 
@@ -76,24 +88,6 @@ export function studentSort(
 	// "MVOP_3" → Map { ... }
 	// "OSE_4" → Map { ... }
 
-	// count how many divisions (columns) each category has in division_config
-	const divisionCounts = new Map<CategoryKey, number>();
-	for (const dc of divisionConfig) {
-		const key = getCategoryKey(dc.subject_type, dc.target_year);
-		divisionCounts.set(key, (divisionCounts.get(key) ?? 0) + 1);
-	}
-
-	// keep only categories that need to be split (appear more than once)
-	const splitCategories = new Map<CategoryKey, number>();
-	for (const [key, count] of divisionCounts) {
-		if (count > 1) {
-			splitCategories.set(key, count);
-		}
-	}
-
-	// splitCategories e.g.: Map { "OSE_3" => 2, "OSE_4" => 3 }
-	// = categories that need their subjects divided into multiple columns
-
 	// collect column labels per category from divisionConfig
 	const columnLabels = new Map<CategoryKey, string[]>();
 	for (const dc of divisionConfig) {
@@ -104,47 +98,50 @@ export function studentSort(
 		columnLabels.get(key)!.push(dc.column_label);
 	}
 
-	// result: column_label → list of subject_ids
-	const columnAssignments = new Map<string, string[]>();
+	// TABLE 1: ranking — subjects sorted by popularity per category
+	const ranking: Record<string, SortedSubject[]> = {};
+	for (const [category, categoryScores] of scores) {
+		ranking[category] = [...categoryScores.entries()]
+			.sort((a, b) => b[1] - a[1])
+			.map(([subject_id, points]) => ({ subject_id, points }));
+	}
+
+	// TABLE 2: columns — sorted + divided into columns where needed
+	const columns: Record<string, SortedSubject[]> = {};
 
 	for (const [category, categoryScores] of scores) {
-		// sort subjects by score descending
 		const sorted = [...categoryScores.entries()].sort((a, b) => b[1] - a[1]);
 
 		const labels = columnLabels.get(category) ?? [];
 		const numColumns = labels.length;
 
 		if (numColumns <= 1) {
-			// single column — no split needed, assign all subjects to that column
+			// single column — use "CATEGORY_LABEL" as key
 			const label = labels[0] ?? category;
-			columnAssignments.set(label, sorted.map(([id]) => id));
+			const key = `${category}_${label}`;
+			columns[key] = sorted.map(([subject_id, points]) => ({ subject_id, points }));
 			continue;
 		}
 
 		// initialize columns
 		for (const label of labels) {
-			columnAssignments.set(label, []);
+			columns[`${category}_${label}`] = [];
 		}
 
 		// snake draft: A,B,C,C,B,A,A,B,C...
 		let colIndex = 0;
-		let direction = 1; // 1 = forward, -1 = backward
-		for (const [subjectId] of sorted) {
-			columnAssignments.get(labels[colIndex])!.push(subjectId);
+		let direction = 1;
+		for (const [subjectId, points] of sorted) {
+			columns[`${category}_${labels[colIndex]}`].push({ subject_id: subjectId, points });
 
 			const nextIndex = colIndex + direction;
 			if (nextIndex >= numColumns || nextIndex < 0) {
-				direction *= -1; // reverse direction at boundaries
+				direction *= -1;
 			} else {
 				colIndex = nextIndex;
 			}
 		}
 	}
 
-	// columnAssignments e.g.:
-	// for OSE_3 with 2 columns: "A" → ["best", "4th", "5th"], "B" → ["2nd", "3rd", "6th"]
-	// for OSE_4 with 3 columns: "A" → [...], "B" → [...], "C" → [...]
-	// for OSE_2 with 1 column:  "A" → [all subjects sorted by score]
-
-	return columnAssignments;
+	return { ranking, columns };
 }
