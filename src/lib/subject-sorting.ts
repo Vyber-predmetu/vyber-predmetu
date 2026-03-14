@@ -76,5 +76,75 @@ export function studentSort(
 	// "MVOP_3" → Map { ... }
 	// "OSE_4" → Map { ... }
 
-	return scores;
+	// count how many divisions (columns) each category has in division_config
+	const divisionCounts = new Map<CategoryKey, number>();
+	for (const dc of divisionConfig) {
+		const key = getCategoryKey(dc.subject_type, dc.target_year);
+		divisionCounts.set(key, (divisionCounts.get(key) ?? 0) + 1);
+	}
+
+	// keep only categories that need to be split (appear more than once)
+	const splitCategories = new Map<CategoryKey, number>();
+	for (const [key, count] of divisionCounts) {
+		if (count > 1) {
+			splitCategories.set(key, count);
+		}
+	}
+
+	// splitCategories e.g.: Map { "OSE_3" => 2, "OSE_4" => 3 }
+	// = categories that need their subjects divided into multiple columns
+
+	// collect column labels per category from divisionConfig
+	const columnLabels = new Map<CategoryKey, string[]>();
+	for (const dc of divisionConfig) {
+		const key = getCategoryKey(dc.subject_type, dc.target_year);
+		if (!columnLabels.has(key)) {
+			columnLabels.set(key, []);
+		}
+		columnLabels.get(key)!.push(dc.column_label);
+	}
+
+	// result: column_label → list of subject_ids
+	const columnAssignments = new Map<string, string[]>();
+
+	for (const [category, categoryScores] of scores) {
+		// sort subjects by score descending
+		const sorted = [...categoryScores.entries()].sort((a, b) => b[1] - a[1]);
+
+		const labels = columnLabels.get(category) ?? [];
+		const numColumns = labels.length;
+
+		if (numColumns <= 1) {
+			// single column — no split needed, assign all subjects to that column
+			const label = labels[0] ?? category;
+			columnAssignments.set(label, sorted.map(([id]) => id));
+			continue;
+		}
+
+		// initialize columns
+		for (const label of labels) {
+			columnAssignments.set(label, []);
+		}
+
+		// snake draft: A,B,C,C,B,A,A,B,C...
+		let colIndex = 0;
+		let direction = 1; // 1 = forward, -1 = backward
+		for (const [subjectId] of sorted) {
+			columnAssignments.get(labels[colIndex])!.push(subjectId);
+
+			const nextIndex = colIndex + direction;
+			if (nextIndex >= numColumns || nextIndex < 0) {
+				direction *= -1; // reverse direction at boundaries
+			} else {
+				colIndex = nextIndex;
+			}
+		}
+	}
+
+	// columnAssignments e.g.:
+	// for OSE_3 with 2 columns: "A" → ["best", "4th", "5th"], "B" → ["2nd", "3rd", "6th"]
+	// for OSE_4 with 3 columns: "A" → [...], "B" → [...], "C" → [...]
+	// for OSE_2 with 1 column:  "A" → [all subjects sorted by score]
+
+	return columnAssignments;
 }
