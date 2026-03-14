@@ -30,6 +30,13 @@
 				Upravit uživatele
 			</button>
 		</div>
+			<div>
+				<h2>Rozdělení studentů do předmětů</h2>
+				<p>Spustí algoritmus pro rozdělení studentů do předmětů podle preferencí.</p>
+				<button disabled>
+					Zpustit rozdělení
+				</button>
+			</div>
 
 		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; opacity: 0.6;">
 			<h2 style="margin-bottom: 0.5rem;">Správa předmětů</h2>

@@ -1,0 +1,26 @@
+import type { PageServerLoad } from './$types';
+import { getServiceClient } from '$lib/supabase-service.server';
+import { studentSort } from '$lib/subject-sorting';
+import type { PreferentialRound, DivisionConfig, Subject } from '$lib/subject-sorting';
+
+export const load: PageServerLoad = async () => {
+	const supabase = getServiceClient();
+
+	const [prefRoundRes, divConfigRes, subjectsRes] = await Promise.all([
+		supabase.from('preferential_round').select('student_id, subject_id, subject_order'),
+		supabase.from('division_config').select('target_year, column_label, subject_type'),
+		supabase.from('subjects').select('id, target_grade, subject_type, teacher_id')
+	]);
+
+	if (prefRoundRes.error) throw new Error(`preferential_round: ${prefRoundRes.error.message}`);
+	if (divConfigRes.error) throw new Error(`division_config: ${divConfigRes.error.message}`);
+	if (subjectsRes.error) throw new Error(`subjects: ${subjectsRes.error.message}`);
+
+	const result = studentSort(
+		prefRoundRes.data as PreferentialRound[],
+		divConfigRes.data as DivisionConfig[],
+		subjectsRes.data as Subject[]
+	);
+
+	return { result };
+};
