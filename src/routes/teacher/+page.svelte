@@ -1,6 +1,5 @@
 
 <script lang="ts">
-	import { page } from '$app/stores';
 	let { data, form } = $props();
 	let name = $state('');
 	let description = $state('');
@@ -11,7 +10,12 @@
 	let now = $derived(() => new Date());
 	let start = $derived(() => submissionWindow?.submissions_start ? new Date(submissionWindow.submissions_start) : null);
 	let end = $derived(() => submissionWindow?.submissions_end ? new Date(submissionWindow.submissions_end) : null);
-	let canSubmit = $derived(() => start() && end() && now() >= start() && now() <= end());
+	let canSubmit = $derived(() => {
+		const s = start();
+		const e = end();
+		const n = now();
+		return s && e && n >= s && n <= e;
+	});
 
 
 	function getFeedback(start: Date | null, end: Date | null, now: Date): string {
@@ -75,7 +79,7 @@
 					<div class="font-bold">{subject.name}</div>
 					<div>{subject.description}</div>
 					<div>Ročník: {subject.target_grade}</div>
-					<div>Typ: {subject.type_of_subject}</div>
+					<div>Typ: {subject.subject_type}</div>
 				</div>
 			{/each}
 		</div>
