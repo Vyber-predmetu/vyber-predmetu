@@ -1,12 +1,12 @@
-import { redirect } from '@sveltejs/kit'
-import { getServiceClient } from '$lib/supabase-service.server'
-import type { ServerLoad } from '@sveltejs/kit'
+import { redirect } from '@sveltejs/kit';
+import { getServiceClient } from '$lib/supabase-service.server';
+import type { ServerLoad } from '@sveltejs/kit';
 
 export const load: ServerLoad = async ({ parent }) => {
-	const { session, user } = await parent()
+	const { session, user } = await parent();
 
 	if (!session) {
-		throw redirect(303, '/auth/login')
+		throw redirect(303, '/auth/login');
 	}
 
 	const supabase = getServiceClient();
@@ -17,7 +17,7 @@ export const load: ServerLoad = async ({ parent }) => {
 		.single();
 
 	if (!dbUser) {
-		throw redirect(303, '/auth/login')
+		throw redirect(303, '/auth/login');
 	}
 
 	const { data: userRoles } = await supabase
@@ -28,29 +28,28 @@ export const load: ServerLoad = async ({ parent }) => {
 	const hasTeacherRole = userRoles?.some((ur) => (ur.roles as any)?.role_name === 'teacher');
 
 	if (!hasTeacherRole) {
-		throw redirect(303, '/auth/login')
+		throw redirect(303, '/auth/login');
 	}
 
+	const { data: submissionWindow } = await supabase
+		.from('submission_window')
+		.select('submissions_start, submissions_end')
+		.order('id', { ascending: false })
+		.limit(1)
+		.single();
 
-		const { data: submissionWindow } = await supabase
-			.from('submission_window')
-			.select('submissions_start, submissions_end')
-			.order('id', { ascending: false })
-			.limit(1)
-			.single();
+	const { data: subjects } = await supabase
+		.from('subjects')
+		.select('*')
+		.eq('teacher_id', dbUser.id)
+		.order('created_at', { ascending: false });
 
-		const { data: subjects } = await supabase
-			.from('subjects')
-			.select('*')
-			.eq('teacher_id', dbUser.id)
-			.order('created_at', { ascending: false });
-
-		return {
-			user,
-			submissionWindow,
-			subjects
-		}
-}
+	return {
+		user,
+		submissionWindow,
+		subjects
+	};
+};
 
 import { fail } from '@sveltejs/kit';
 export const actions = {
