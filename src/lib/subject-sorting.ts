@@ -145,3 +145,108 @@ export function studentSort(
 
 	return { ranking, columns };
 }
+
+// --- Student Enrollment Algorithm ---
+
+export type Enrollment = {
+	student_id: string;
+	subject_id: string;
+	target_year: number;
+	subject_type: string;
+	status: 'waitlisted';
+};
+
+/**
+ * Assigns students to subjects based on their preferences and the column division.
+ *
+ * For each category a student voted in:
+ * - If the category has 1 column → assign the student's highest-preferred subject from that column.
+ * - If the category has N columns → assign the student's highest-preferred subject from EACH column.
+ *
+ * @param columns - The subject division output (column key → subject IDs in that column)
+ * @param preferences - All preferential_round votes
+ * @param subjects - Subject metadata (for target_grade, subject_type)
+ * @param divisionConfig - Column config per category
+ */
+export function enrollStudents(
+	columns: Record<string, SortedSubject[]>,
+	preferences: PreferentialRound[],
+	subjects: Subject[],
+	divisionConfig: DivisionConfig[]
+): Enrollment[] {
+	// Build subject metadata lookup
+	const subjectMeta = new Map<string, { subject_type: string; target_grade: number }>();
+	for (const s of subjects) {
+		subjectMeta.set(s.id, { subject_type: s.subject_type, target_grade: s.target_grade });
+	}
+
+	// Build set of subject IDs per column key (for fast lookup)
+	const columnSubjectSets = new Map<string, Set<string>>();
+	for (const [key, subs] of Object.entries(columns)) {
+		columnSubjectSets.set(key, new Set(subs.map((s) => s.subject_id)));
+	}
+
+	// Collect column labels per category from divisionConfig
+	const categoryColumns = new Map<CategoryKey, string[]>();
+	for (const dc of divisionConfig) {
+		const cat = getCategoryKey(dc.subject_type, dc.target_year);
+		if (!categoryColumns.has(cat)) categoryColumns.set(cat, []);
+		categoryColumns.get(cat)!.push(dc.column_label);
+	}
+
+	// Group preferences by student, sorted by subject_order (ascending = most preferred first)
+	const studentPrefs = new Map<string, PreferentialRound[]>();
+	for (const vote of preferences) {
+		if (!studentPrefs.has(vote.student_id)) studentPrefs.set(vote.student_id, []);
+		studentPrefs.get(vote.student_id)!.push(vote);
+	}
+	for (const prefs of studentPrefs.values()) {
+		prefs.sort((a, b) => a.subject_order - b.subject_order);
+	}
+
+	// Determine which categories each student voted in
+	// (from their votes' subject metadata)
+	const studentCategories = new Map<string, Set<CategoryKey>>();
+	for (const [studentId, prefs] of studentPrefs) {
+		const cats = new Set<CategoryKey>();
+		for (const vote of prefs) {
+			const meta = subjectMeta.get(vote.subject_id);
+			if (meta) cats.add(getCategoryKey(meta.subject_type, meta.target_grade));
+		}
+		studentCategories.set(studentId, cats);
+	}
+
+	const enrollments: Enrollment[] = [];
+
+	for (const [studentId, prefs] of studentPrefs) {
+		const categories = studentCategories.get(studentId)!;
+
+		for (const category of categories) {
+			const labels = categoryColumns.get(category) ?? [];
+
+			// For each column in this category, find the student's top preferred subject in that column
+			for (const label of labels) {
+				const columnKey = `${category}_${label}`;
+				const columnSet = columnSubjectSets.get(columnKey);
+				if (!columnSet) continue;
+
+				// Walk preferences in order (most preferred first), pick the first that's in this column
+				for (const vote of prefs) {
+					if (columnSet.has(vote.subject_id)) {
+						const meta = subjectMeta.get(vote.subject_id)!;
+						enrollments.push({
+							student_id: studentId,
+							subject_id: vote.subject_id,
+							target_year: meta.target_grade,
+							subject_type: meta.subject_type,
+							status: 'waitlisted'
+						});
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return enrollments;
+}

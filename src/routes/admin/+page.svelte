@@ -21,6 +21,17 @@
 		subjectNames: Record<string, string>;
 	} | null>(null);
 
+	let enrollLoading = $state(false);
+	let enrollError = $state<string | null>(null);
+	let enrollResult = $state<{
+		count: number;
+		enrollments: Array<{ student_id: string; subject_id: string; target_year: number; subject_type: string }>;
+		subjectNames: Record<string, string>;
+		studentNames: Record<string, string>;
+		subjectColumns: Record<string, string>;
+		multiColumnCategories: Record<string, string[]>;
+	} | null>(null);
+
 	const categoryLabels: Record<string, string> = {
 		OSE_2: 'OSE – 2. ročník',
 		OSE_3: 'OSE – 3. ročník',
@@ -58,7 +69,22 @@
 		}
 	}
 
-	onMount(loadSavedDivision);
+	async function loadSavedEnrollment() {
+		try {
+			const res = await fetch('/admin/enrollment');
+			const json = await res.json();
+			if (res.ok && !json.empty && json.enrollments) {
+				enrollResult = json;
+			}
+		} catch {
+			// silently fail — no saved data
+		}
+	}
+
+	onMount(() => {
+		loadSavedDivision();
+		loadSavedEnrollment();
+	});
 
 	// Reload saved division when navigating back from editor
 	afterNavigate(({ from }) => {
@@ -66,6 +92,15 @@
 			loadSavedDivision();
 		}
 	});
+
+	function enrollCategoryLabel(e: { subject_id: string; subject_type: string; target_year: number }): string {
+		if (!enrollResult) return '';
+		const cat = `${e.subject_type}_${e.target_year}`;
+		const labels = enrollResult.multiColumnCategories[cat];
+		if (!labels) return formatCategory(cat);
+		const colLabel = enrollResult.subjectColumns[e.subject_id];
+		return `${formatCategory(cat)} – ${labels.indexOf(colLabel) + 1}`;
+	}
 
 	async function runDivision() {
 		loading = true;
@@ -88,6 +123,28 @@
 			error = 'Nepodařilo se spojit se serverem';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function runEnrollment() {
+		enrollLoading = true;
+		enrollError = null;
+		enrollResult = null;
+
+		try {
+			const res = await fetch('/admin/enrollment', { method: 'POST' });
+			const json = await res.json();
+
+			if (!res.ok) {
+				enrollError = json.error ?? 'Chyba při zařazování studentů';
+				return;
+			}
+
+			enrollResult = json;
+		} catch (e) {
+			enrollError = 'Nepodařilo se spojit se serverem';
+		} finally {
+			enrollLoading = false;
 		}
 	}
 </script>
@@ -125,9 +182,16 @@
 			</button>
 		</div>
 
-		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; opacity: 0.6;">
-			<h2 style="margin-bottom: 0.5rem;">Správa předmětů</h2>
-			<p style="color: #666;">Funkce v přípravě</p>
+		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px;">
+			<h2 style="margin-bottom: 0.5rem;">Zařazení studentů do předmětů</h2>
+			<p style="margin-bottom: 1rem; color: #666;">Přiřadí studentům předměty podle jejich preferencí a rozdělení do sloupců.</p>
+			<button
+				onclick={runEnrollment}
+				disabled={enrollLoading}
+				style="padding: 0.5rem 1rem; cursor: pointer;"
+			>
+				{enrollLoading ? 'Zpracovávání...' : 'Zařadit studenty'}
+			</button>
 		</div>
 	</div>
 
@@ -211,6 +275,40 @@
 						</table>
 					</div>
 				{/each}
+			</div>
+		</div>
+	{/if}
+
+	{#if enrollError}
+		<div style="margin-top: 2rem; padding: 1rem; background: #fee; border: 1px solid #f88; border-radius: 8px; color: #c00;">
+			{enrollError}
+		</div>
+	{/if}
+
+	{#if enrollResult}
+		<div style="margin-top: 2rem;">
+			<h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Zařazení studentů</h2>
+			<p style="color: #666; margin-bottom: 1rem;">Celkem zařazeno: {enrollResult.count} přiřazení</p>
+
+			<div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+				<table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+					<thead>
+						<tr style="border-bottom: 1px solid #ddd; text-align: left; background: #f9f9f9;">
+							<th style="padding: 0.5rem 1rem;">Student</th>
+							<th style="padding: 0.5rem 1rem;">Předmět</th>
+							<th style="padding: 0.5rem 1rem;">Kategorie</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each enrollResult.enrollments as e}
+							<tr style="border-bottom: 1px solid #eee;">
+								<td style="padding: 0.5rem 1rem;">{enrollResult.studentNames[e.student_id] ?? e.student_id}</td>
+								<td style="padding: 0.5rem 1rem;">{enrollResult.subjectNames[e.subject_id] ?? e.subject_id}</td>
+								<td style="padding: 0.5rem 1rem;">{enrollCategoryLabel(e)}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		</div>
 	{/if}
