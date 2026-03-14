@@ -10,7 +10,7 @@ export const GET = async ({ url }) => {
   const { data: subjects, error: subjectsError } = await supabase
     .from('subjects')
     .select('id')
-    .eq('type_of_subject', type)
+    .eq('subject_type', type)
     .eq('target_grade', grade);
   if (subjectsError) return json({ error: subjectsError.message }, { status: 500 });
   const subjectIds = subjects.map(s => s.id);

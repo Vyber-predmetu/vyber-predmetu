@@ -12,8 +12,8 @@ export const GET: RequestHandler = async ({ url }) => {
   }
   const { data: subjects, error } = await supabase
     .from('subjects')
-    .select('id, name, type_of_subject, target_grade')
-    .eq('type_of_subject', type)
+    .select('id, name, subject_type, target_grade')
+    .eq('subject_type', type)
     .eq('target_grade', grade + 1);
   console.log('DEBUG: subjects query result', subjects, 'error:', error);
   if (error) return json({ error: error.message }, { status: 500 });

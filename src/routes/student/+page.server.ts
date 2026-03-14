@@ -116,7 +116,7 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 		id: number;
 		name: string;
 		description: string;
-		type_of_subject?: string;
+		subject_type?: string;
 		target_grade?: number;
 	}> = [];
 	let subjectTypes: string[] = [];
@@ -130,7 +130,7 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 		}
 		const { data: subjectData, error: subjectError } = await supabase
 			.from('subjects')
-			.select('id, name, description, type_of_subject, target_grade')
+			.select('id, name, description, subject_type, target_grade')
 			.eq('target_grade', grade + 1)
 			.order('name', { ascending: true });
 		if (!subjectError && subjectData) {
@@ -141,7 +141,7 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 			const { data: typeSubjects, error: typeSubjectsError } = await supabase
 				.from('subjects')
 				.select('id')
-				.eq('type_of_subject', type)
+				.eq('subject_type', type)
 				.eq('target_grade', grade + 1);
 			if (typeSubjectsError) continue;
 			const subjectIds = typeSubjects.map((s) => s.id);

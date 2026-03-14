@@ -12,8 +12,8 @@ export const GET = async ({ url }) => {
   }
   const { data: subjects, error } = await supabase
     .from('subjects')
-    .select('id, name, type_of_subject, target_grade')
-    .eq('type_of_subject', type)
+    .select('id, name, subject_type, target_grade')
+    .eq('subject_type', type)
     .eq('target_grade', grade + 1);
   console.log('DEBUG: subjects query result', subjects, 'error:', error);
   if (error) return json({ error: error.message }, { status: 500 });
@@ -34,11 +34,11 @@ export const POST = async ({ request }) => {
   if (preferences.length > 0) {
     const { data: subject, error: subjectError } = await supabase
       .from('subjects')
-      .select('type_of_subject, target_grade')
+      .select('subject_type, target_grade')
       .eq('id', preferences[0].subject_id)
       .single();
     if (subject && !subjectError) {
-      type = subject.type_of_subject;
+      type = subject.subject_type;
       grade = subject.target_grade;
     }
   }
@@ -48,7 +48,7 @@ export const POST = async ({ request }) => {
   const { data: allSubjects, error: allSubjectsError } = await supabase
     .from('subjects')
     .select('id')
-    .eq('type_of_subject', type)
+    .eq('subject_type', type)
     .eq('target_grade', grade);
   if (allSubjectsError) return json({ error: allSubjectsError.message }, { status: 500 });
   const subjectIds = allSubjects.map(s => s.id);

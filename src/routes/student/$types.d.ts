@@ -16,7 +16,7 @@ export type PageData = {
     id: number;
     name: string;
     description: string;
-    type_of_subject?: string;
+    subject_type?: string;
     target_grade?: number;
   }>;
     subjectTypes?: string[];

@@ -65,7 +65,7 @@
         {#each subjects as subject, i (subject.id)}
           <div class="subject-card" style="border: 1px solid #ccc; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
             <strong>{subject.name}</strong>
-            <div><em>{subject.type_of_subject}</em></div>
+            <div><em>{subject.subject_type}</em></div>
             <div>
               {#if subject.description.length > 120}
                 <span>{showMoreArr[i] ? subject.description : subject.description.slice(0, 120) + '...'}</span>

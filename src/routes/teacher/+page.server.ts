@@ -63,12 +63,12 @@ export const actions = {
 		const name = (form.get('name') || '').toString().trim();
 		const description = (form.get('description') || '').toString().trim();
 		const target_grade = form.get('target_grade');
-		const type_of_subject = form.get('type_of_subject');
+		const subject_type = form.get('type_of_subject');
 
-		if (!name || !description || !target_grade || !type_of_subject) {
+		if (!name || !description || !target_grade || !subject_type) {
 			return fail(400, { error: 'Všechna pole jsou povinná.' });
 		}
-		if (type_of_subject === 'MVOP' && target_grade !== '3') {
+		if (subject_type === 'MVOP' && target_grade !== '3') {
 			return fail(400, { error: 'MVOP předmět může být pouze pro 3. ročník.' });
 		}
 
@@ -99,7 +99,7 @@ export const actions = {
 				target_grade,
 				name,
 				description,
-				type_of_subject
+				subject_type
 			})
 			.select()
 			.single();

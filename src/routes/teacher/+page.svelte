@@ -75,7 +75,7 @@
 					<div class="font-bold">{subject.name}</div>
 					<div>{subject.description}</div>
 					<div>Ročník: {subject.target_grade}</div>
-					<div>Typ: {subject.type_of_subject}</div>
+					<div>Typ: {subject.subject_type}</div>
 				</div>
 			{/each}
 		</div>
