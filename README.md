@@ -11,3 +11,4 @@ This project is a web application where teachers offer elective subjects and stu
 ## Documentation
 
 - [Database docs](database-docs.md)
+- [Code docs](code-docs.md)
