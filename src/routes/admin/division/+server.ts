@@ -10,8 +10,8 @@ export const POST: RequestHandler = async () => {
 	const [prefRoundRes, divConfigRes, subjectsRes, subjectNamesRes] = await Promise.all([
 		supabase.from('preferential_round').select('student_id, subject_id, subject_order'),
 		supabase.from('division_config').select('target_year, column_label, subject_type'),
-		supabase.from('subjects').select('id, target_grade, subject_type, teacher_id'),
-		supabase.from('subjects').select('id, name')
+		supabase.from('subjects').select('id, target_grade, subject_type, teacher_id').eq('state', 'accepted'),
+		supabase.from('subjects').select('id, name').eq('state', 'accepted')
 	]);
 
 	if (prefRoundRes.error) return json({ error: prefRoundRes.error.message }, { status: 500 });
@@ -108,9 +108,9 @@ export const GET: RequestHandler = async () => {
 	const [divisionRes, subjectNamesRes, divConfigRes, subjectsMetaRes, prefRoundRes] =
 		await Promise.all([
 			supabase.from('subject_division').select('subject_id, column_label'),
-			supabase.from('subjects').select('id, name'),
+			supabase.from('subjects').select('id, name').eq('state', 'accepted'),
 			supabase.from('division_config').select('target_year, column_label, subject_type'),
-			supabase.from('subjects').select('id, subject_type, target_grade'),
+			supabase.from('subjects').select('id, subject_type, target_grade').eq('state', 'accepted'),
 			supabase.from('preferential_round').select('student_id, subject_id, subject_order')
 		]);
 

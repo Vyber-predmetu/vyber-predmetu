@@ -52,7 +52,8 @@ export const POST = async ({ request }) => {
 		.from('subjects')
 		.select('id')
 		.eq('subject_type', type)
-		.eq('target_grade', grade);
+		.eq('target_grade', grade)
+		.eq('state', 'accepted');
 	if (allSubjectsError) return json({ error: allSubjectsError.message }, { status: 500 });
 	const subjectIds = allSubjects.map((s) => s.id);
 	if (!subjectIds.length)

@@ -16,7 +16,7 @@ export const POST: RequestHandler = async () => {
 	const [divisionRes, prefRoundRes, subjectsRes, divConfigRes, studentsRes] = await Promise.all([
 		supabase.from('subject_division').select('subject_id, column_label'),
 		supabase.from('preferential_round').select('student_id, subject_id, subject_order'),
-		supabase.from('subjects').select('id, target_grade, subject_type, teacher_id, name'),
+		supabase.from('subjects').select('id, target_grade, subject_type, teacher_id, name').eq('state', 'accepted'),
 		supabase.from('division_config').select('target_year, column_label, subject_type'),
 		supabase.from('users').select('id, first_name, last_name')
 	]);
@@ -124,7 +124,7 @@ export const GET: RequestHandler = async () => {
 
 	const [enrollmentRes, subjectsRes, studentsRes, divisionRes, divConfigRes] = await Promise.all([
 		supabase.from('student_enrollment').select('student_id, subject_id, target_year, subject_type'),
-		supabase.from('subjects').select('id, name'),
+		supabase.from('subjects').select('id, name').eq('state', 'accepted'),
 		supabase.from('users').select('id, first_name, last_name'),
 		supabase.from('subject_division').select('subject_id, column_label'),
 		supabase.from('division_config').select('target_year, column_label, subject_type')
