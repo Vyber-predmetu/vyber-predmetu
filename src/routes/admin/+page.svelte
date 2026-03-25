@@ -183,6 +183,22 @@
 		</div>
 
 		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px;">
+			<h2 style="margin-bottom: 0.5rem;">Časové okno pro odesílání předmětů</h2>
+			<p style="margin-bottom: 1rem; color: #666;">Nastavte, kdy mohou učitelé odesílat předměty.</p>
+			<button onclick={() => goto('/admin/submission-window')} style="padding: 0.5rem 1rem; cursor: pointer;">
+				Nastavit časové okno
+			</button>
+		</div>
+
+		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px;">
+			<h2 style="margin-bottom: 0.5rem;">Časové okno pro hlasování</h2>
+			<p style="margin-bottom: 1rem; color: #666;">Nastavte, kdy mohou studenti hlasovat (pro každý ročník zvlášť).</p>
+			<button onclick={() => goto('/admin/voting-window')} style="padding: 0.5rem 1rem; cursor: pointer;">
+				Nastavit hlasovací okna
+			</button>
+		</div>
+
+		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px;">
 			<h2 style="margin-bottom: 0.5rem;">Rozdělení předmětů podle popularity</h2>
 			<button
 				onclick={runDivision}

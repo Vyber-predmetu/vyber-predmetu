@@ -33,7 +33,7 @@ export const load: ServerLoad = async ({ parent }) => {
 
 	const { data: submissionWindow } = await supabase
 		.from('submission_window')
-		.select('submissions_start, submissions_end')
+		.select('start, end')
 		.order('id', { ascending: false })
 		.limit(1)
 		.single();
