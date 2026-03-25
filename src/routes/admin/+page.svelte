@@ -315,7 +315,16 @@
 	{#if enrollResult}
 		<div style="margin-top: 2rem;">
 			<h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Zařazení studentů</h2>
-			<p style="color: #666; margin-bottom: 1rem;">Celkem zařazeno: {enrollResult.count} přiřazení</p>
+			<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+				<p style="color: #666; margin: 0;">Celkem zařazeno: {enrollResult.count} přiřazení</p>
+				<a
+					href="/admin/enrollment/export"
+					download
+					style="padding: 0.5rem 1rem; background: #16a34a; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 0.85rem; cursor: pointer;"
+				>
+					Stáhnout výsledky
+				</a>
+			</div>
 
 			<div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
 				<table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
