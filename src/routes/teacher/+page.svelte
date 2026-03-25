@@ -80,6 +80,7 @@
 					<div>{subject.description}</div>
 					<div>Ročník: {subject.target_grade}</div>
 					<div>Typ: {subject.subject_type}</div>
+					<div>Stav: {subject.state === 'accepted' ? 'Schváleno' : subject.state === 'rejected' ? 'Zamítnuto' : 'Čeká na schválení'}</div>
 				</div>
 			{/each}
 		</div>
