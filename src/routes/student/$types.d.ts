@@ -5,8 +5,8 @@ export type PageData = {
 	} | null;
 	canVote?: boolean;
 	votingWindow?: {
-		voting_start: string;
-		voting_end: string;
+		start: string;
+		end: string;
 	} | null;
 	grade?: number;
 	targetYear?: number;

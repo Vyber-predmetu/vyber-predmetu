@@ -98,7 +98,7 @@
         {#if data.canVote}
           <p>
             Hlasování je otevřeno do
-            {new Date(data.votingWindow.voting_end).toLocaleString('cs-CZ')}
+            {new Date(data.votingWindow.end).toLocaleString('cs-CZ')}
           </p>
         {/if}
       </div>

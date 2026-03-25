@@ -80,7 +80,7 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 
 	const { data: window, error: windowError } = await supabase
 		.from('voting_window')
-		.select('voting_start, voting_end')
+		.select('start, end')
 		.eq('target_year', targetYear)
 		.single();
 
@@ -90,8 +90,8 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 	if (!window || windowError) {
 		votingMessage = 'Pro hlasování se vraťte později.';
 	} else {
-		const start = new Date(window.voting_start);
-		const end = new Date(window.voting_end);
+		const start = new Date(window.start);
+		const end = new Date(window.end);
 		if (now < start) {
 			votingMessage = `Pro hlasování se vraťte později. Hlasování se otevře ${start.toLocaleString('cs-CZ')}`;
 		} else if (now > end) {
