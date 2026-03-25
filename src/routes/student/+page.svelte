@@ -9,6 +9,13 @@
   let subjects = data.subjects ?? [];
   let showMoreArr: boolean[] = Array(subjects.length).fill(false);
 
+  function columnSuffix(enrollment: { subject_id: number; subject_type: string; target_year: number }): string {
+    const label = data.columnLabels?.[enrollment.subject_id];
+    const isMulti = data.multiColumnCategories?.[`${enrollment.subject_type}_${enrollment.target_year}`];
+    if (label && isMulti) return `-${label.charCodeAt(0) - 64}`;
+    return '';
+  }
+
   async function handleLogout() {
     loggingOut = true
     console.debug('handleLogout: initiating')
@@ -108,5 +115,22 @@
         <p>{data.votingMessage}</p>
       </div>
     {/if}
+  {/if}
+
+  {#if data.enrollments && data.enrollments.length > 0}
+    <div style="margin-top: 2rem;">
+      <h2>Vaše zařazené předměty</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+        {#each data.enrollments as enrollment}
+          <div style="border: 1px solid #ccc; padding: 1rem; border-radius: 8px;">
+            <strong>{enrollment.subjects?.name ?? 'Neznámý předmět'}</strong>
+            <div><em>{enrollment.subject_type}{columnSuffix(enrollment)}</em> · {enrollment.target_year}. ročník</div>
+            {#if enrollment.subjects?.description}
+              <div style="color: #444; font-size: 0.9rem; margin-top: 0.25rem;">{enrollment.subjects.description}</div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
   {/if}
 </div>
