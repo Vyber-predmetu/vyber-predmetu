@@ -16,7 +16,10 @@ export const POST: RequestHandler = async () => {
 	const [divisionRes, prefRoundRes, subjectsRes, divConfigRes, studentsRes] = await Promise.all([
 		supabase.from('subject_division').select('subject_id, column_label'),
 		supabase.from('preferential_round').select('student_id, subject_id, subject_order'),
-		supabase.from('subjects').select('id, target_grade, subject_type, teacher_id, name').eq('state', 'accepted'),
+		supabase
+			.from('subjects')
+			.select('id, target_grade, subject_type, teacher_id, name')
+			.eq('state', 'accepted'),
 		supabase.from('division_config').select('target_year, column_label, subject_type'),
 		supabase.from('users').select('id, first_name, last_name')
 	]);
