@@ -8,8 +8,8 @@
 
 	let submissionWindow = data.submissionWindow;
 	let now = $derived(() => new Date());
-	let start = $derived(() => submissionWindow?.submissions_start ? new Date(submissionWindow.submissions_start) : null);
-	let end = $derived(() => submissionWindow?.submissions_end ? new Date(submissionWindow.submissions_end) : null);
+	let start = $derived(() => submissionWindow?.start ? new Date(submissionWindow.start) : null);
+	let end = $derived(() => submissionWindow?.end ? new Date(submissionWindow.end) : null);
 	let canSubmit = $derived(() => {
 		const s = start();
 		const e = end();
