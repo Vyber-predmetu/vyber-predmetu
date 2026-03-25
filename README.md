@@ -2,7 +2,7 @@
 
 A full-stack web application that automates elective subject enrollment at a secondary school — from teacher submissions and student voting to algorithmic distribution and Excel export. Built to replace a manual paper-based process for **200+ students** across **50+ subjects**.
 
-<!-- ![Demo](screenshots/demo.png) -->
+[System Workflow (screenshots)](demo.md)
 
 ---
 
@@ -53,24 +53,12 @@ A full-stack web application that automates elective subject enrollment at a sec
 
 ## 🔄 System Workflow
 
+See the full [visual walkthrough with screenshots](demo.md).
+
 ```
-1. Admin opens submission window
-       ↓
-2. Teachers submit subjects (state: waitlisted)
-       ↓
-3. Admin reviews & approves subjects (state: accepted)
-       ↓
-4. Admin opens voting windows (per grade)
-       ↓
-5. Students rank subjects by preference (drag-and-drop)
-       ↓
-6. Admin runs sorting algorithm → subjects split into columns
-       ↓
-7. Admin runs enrollment algorithm → students assigned to subjects
-       ↓
-8. Students & teachers see results on their dashboards
-       ↓
-9. Admin exports enrollment data as Excel
+Admin configures windows → Teachers submit subjects → Admin approves
+  → Students rank preferences (drag-and-drop) → Admin runs sorting
+  → Admin runs enrollment → Results on dashboards → Export to Excel
 ```
 
 ---
@@ -161,21 +149,14 @@ pnpm dev
 
 ## 📸 Screenshots
 
-> _Add 5–6 screenshots to a `screenshots/` folder and update the paths below._
-
-| Screenshot            | Description                                          |
-| --------------------- | ---------------------------------------------------- |
-| **Student Dashboard** | Subject cards, voting buttons, enrolled subjects     |
-| **Voting Interface**  | Drag-and-drop preference ranking                     |
-| **Admin Dashboard**   | Management cards, division results, enrollment table |
-| **Subject Approval**  | Filter by state, approve/reject with one click       |
-| **Division Results**  | Popularity ranking + column distribution tables      |
-| **Excel Export**      | Downloaded spreadsheet with per-category sheets      |
-
-<!--
-![Student Dashboard](screenshots/student-dashboard.png)
-![Voting Interface](screenshots/voting.png)
-![Admin Dashboard](screenshots/admin-dashboard.png)
-![Subject Approval](screenshots/subject-approval.png)
-![Division Results](screenshots/division-results.png)
--->
+|                                                          |                                                         |
+| -------------------------------------------------------- | ------------------------------------------------------- |
+| ![Admin Dashboard](screenshots/admin-dashboard.png)      | ![Student Voting](screenshots/student-voting.png)       |
+| Admin Dashboard                                          | Drag-and-drop voting                                    |
+| ![Subject Approval](screenshots/subject-approval.png)    | ![Student Dashboard](screenshots/student-dashboard.png) |
+| Subject approval                                         | Student dashboard                                       |
+| ![Sorting Results](screenshots/sorting-results.png)      | ![Excel Export](screenshots/excel-export.png)           |
+| Sorting algorithm results                                | Excel export                                            |
+| **[Subject Approval](screenshots/subject-approval.png)** | Filter by state, approve/reject with one click          |
+| **Division Results**                                     | Popularity ranking + column distribution tables         |
+| **[Excel Export](screenshots/excel-result.png)**         | Downloaded spreadsheet with per-category sheets         |
