@@ -14,7 +14,8 @@ export const GET = async ({ url }) => {
 		.from('subjects')
 		.select('id, name, subject_type, target_grade')
 		.eq('subject_type', type)
-		.eq('target_grade', grade + 1);
+		.eq('target_grade', grade + 1)
+		.eq('state', 'accepted');
 	console.log('DEBUG: subjects query result', subjects, 'error:', error);
 	if (error) return json({ error: error.message }, { status: 500 });
 	return json({ subjects });

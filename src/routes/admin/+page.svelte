@@ -6,6 +6,7 @@
 	interface Props {
 		data: {
 			user: any;
+			waitlistedCount: number;
 		};
 	}
 
@@ -154,6 +155,17 @@
 	<p style="color: #666; margin-bottom: 2rem;">Vítejte, {data.user?.email}</p>
 
 	<div style="display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px;">
+			<h2 style="margin-bottom: 0.5rem;">Správa předmětů</h2>
+			<p style="margin-bottom: 1rem; color: #666;">Schvalování a zamítání předmětů zadaných učiteli.</p>
+			{#if data.waitlistedCount > 0}
+				<p style="margin-bottom: 1rem; color: #e67e00; font-weight: 600;">{data.waitlistedCount} {data.waitlistedCount === 1 ? 'předmět čeká' : data.waitlistedCount < 5 ? 'předměty čekají' : 'předmětů čeká'} na vyřízení</p>
+			{/if}
+			<button onclick={() => goto('/admin/subjects')} style="padding: 0.5rem 1rem; cursor: pointer;">
+				Spravovat předměty
+			</button>
+		</div>
+
 		<div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px;">
 			<h2 style="margin-bottom: 0.5rem;">Nahrát uživatele</h2>
 			<p style="margin-bottom: 1rem; color: #666;">Hromadné nahrání uživatelů z CSV nebo Excel souboru.</p>

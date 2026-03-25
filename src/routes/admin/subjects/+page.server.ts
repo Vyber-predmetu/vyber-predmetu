@@ -31,13 +31,29 @@ export const load: ServerLoad = async ({ parent }) => {
 		throw redirect(303, '/auth/login');
 	}
 
-	const { count: waitlistedCount } = await supabase
+	const { data: subjects } = await supabase
 		.from('subjects')
-		.select('*', { count: 'exact', head: true })
-		.eq('state', 'waitlisted');
+		.select('id, name, description, subject_type, target_grade, state, created_at, teacher_id')
+		.order('state', { ascending: true })
+		.order('created_at', { ascending: false });
+
+	const teacherIds = [...new Set((subjects ?? []).map((s) => s.teacher_id))];
+	let teacherEmails: Record<string, string> = {};
+	if (teacherIds.length > 0) {
+		const { data: teachers } = await supabase
+			.from('users')
+			.select('id, email')
+			.in('id', teacherIds);
+		if (teachers) {
+			for (const t of teachers) {
+				teacherEmails[t.id] = t.email;
+			}
+		}
+	}
 
 	return {
 		user,
-		waitlistedCount: waitlistedCount ?? 0
+		subjects: subjects ?? [],
+		teacherEmails
 	};
 };
