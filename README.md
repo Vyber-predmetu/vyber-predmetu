@@ -51,6 +51,30 @@ A full-stack web application that automates elective subject enrollment at a sec
 
 ---
 
+## 🔄 System Workflow
+
+```
+1. Admin opens submission window
+       ↓
+2. Teachers submit subjects (state: waitlisted)
+       ↓
+3. Admin reviews & approves subjects (state: accepted)
+       ↓
+4. Admin opens voting windows (per grade)
+       ↓
+5. Students rank subjects by preference (drag-and-drop)
+       ↓
+6. Admin runs sorting algorithm → subjects split into columns
+       ↓
+7. Admin runs enrollment algorithm → students assigned to subjects
+       ↓
+8. Students & teachers see results on their dashboards
+       ↓
+9. Admin exports enrollment data as Excel
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -95,30 +119,6 @@ subjects ── subject_division
 
 ---
 
-## 🔄 System Workflow
-
-```
-1. Admin opens submission window
-       ↓
-2. Teachers submit subjects (state: waitlisted)
-       ↓
-3. Admin reviews & approves subjects (state: accepted)
-       ↓
-4. Admin opens voting windows (per grade)
-       ↓
-5. Students rank subjects by preference (drag-and-drop)
-       ↓
-6. Admin runs sorting algorithm → subjects split into columns
-       ↓
-7. Admin runs enrollment algorithm → students assigned to subjects
-       ↓
-8. Students & teachers see results on their dashboards
-       ↓
-9. Admin exports enrollment data as Excel
-```
-
----
-
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -147,17 +147,6 @@ cp .env.example .env
 # Start development server
 pnpm dev
 ```
-
-### Available Scripts
-
-| Command        | Description              |
-| -------------- | ------------------------ |
-| `pnpm dev`     | Start dev server         |
-| `pnpm build`   | Production build         |
-| `pnpm preview` | Preview production build |
-| `pnpm check`   | TypeScript type checking |
-| `pnpm lint`    | ESLint + Prettier check  |
-| `pnpm format`  | Auto-format code         |
 
 ---
 
