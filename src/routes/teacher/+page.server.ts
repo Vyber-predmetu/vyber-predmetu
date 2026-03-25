@@ -44,10 +44,35 @@ export const load: ServerLoad = async ({ parent }) => {
 		.eq('teacher_id', dbUser.id)
 		.order('created_at', { ascending: false });
 
+	const subjectIds = (subjects ?? []).map((s) => s.id);
+	let enrollmentsBySubject: Record<number, { first_name: string; last_name: string }[]> = {};
+	if (subjectIds.length > 0) {
+		const { data: enrollments } = await supabase
+			.from('student_enrollment')
+			.select('subject_id, student_id')
+			.in('subject_id', subjectIds);
+		if (enrollments && enrollments.length > 0) {
+			const studentIds = [...new Set(enrollments.map((e) => e.student_id))];
+			const { data: students } = await supabase
+				.from('users')
+				.select('id, first_name, last_name')
+				.in('id', studentIds);
+			const studentMap = new Map(
+				(students ?? []).map((s) => [s.id, { first_name: s.first_name, last_name: s.last_name }])
+			);
+			for (const e of enrollments) {
+				if (!enrollmentsBySubject[e.subject_id]) enrollmentsBySubject[e.subject_id] = [];
+				const student = studentMap.get(e.student_id);
+				if (student) enrollmentsBySubject[e.subject_id].push(student);
+			}
+		}
+	}
+
 	return {
 		user,
 		submissionWindow,
-		subjects
+		subjects,
+		enrollmentsBySubject
 	};
 };
 

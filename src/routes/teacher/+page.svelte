@@ -5,6 +5,7 @@
 	let description = $state('');
 	let target_grade = $state('');
 	let type_of_subject = $state('');
+	let expandedSubjects = $state<Record<number, boolean>>({});
 
 	let submissionWindow = data.submissionWindow;
 	let now = $derived(() => new Date());
@@ -75,12 +76,32 @@
 	{#if data.subjects?.length}
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{#each data.subjects as subject}
+				{@const students = data.enrollmentsBySubject?.[subject.id] ?? []}
 				<div class="p-4 border rounded bg-white shadow">
 					<div class="font-bold">{subject.name}</div>
 					<div>{subject.description}</div>
 					<div>Ročník: {subject.target_grade}</div>
 					<div>Typ: {subject.subject_type}</div>
 					<div>Stav: {subject.state === 'accepted' ? 'Schváleno' : subject.state === 'rejected' ? 'Zamítnuto' : 'Čeká na schválení'}</div>
+					<div style="margin-top: 0.5rem;">
+						Počet studentů: <strong>{students.length}</strong>
+						{#if students.length > 0}
+							<button
+								type="button"
+								style="margin-left: 0.5rem; cursor: pointer; background: none; border: none; color: #2563eb; text-decoration: underline;"
+								onclick={() => expandedSubjects[subject.id] = !expandedSubjects[subject.id]}
+							>
+								{expandedSubjects[subject.id] ? 'Skrýt studenty' : 'Zobrazit studenty'}
+							</button>
+						{/if}
+					</div>
+					{#if expandedSubjects[subject.id]}
+						<ul style="margin-top: 0.5rem; padding-left: 1.2rem;">
+							{#each students as student}
+								<li>{student.first_name} {student.last_name}</li>
+							{/each}
+						</ul>
+					{/if}
 				</div>
 			{/each}
 		</div>
