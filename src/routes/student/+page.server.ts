@@ -66,6 +66,38 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 		targetYear = grade + 1;
 	}
 	if (grade === 4) {
+		const { data: enrollments4 } = await supabase
+			.from('student_enrollment')
+			.select('subject_id, subject_type, target_year, subjects(name, description)')
+			.eq('student_id', dbUser.id);
+
+		const enrolledSubjectIds4 = (enrollments4 ?? []).map((e) => e.subject_id);
+		let columnLabels4: Record<string, string> = {};
+		let multiColumnCategories4: Record<string, boolean> = {};
+		if (enrolledSubjectIds4.length > 0) {
+			const [{ data: divRows }, { data: divConfig }] = await Promise.all([
+				supabase
+					.from('subject_division')
+					.select('subject_id, column_label')
+					.in('subject_id', enrolledSubjectIds4),
+				supabase.from('division_config').select('target_year, column_label, subject_type')
+			]);
+			if (divRows) {
+				for (const r of divRows) columnLabels4[r.subject_id] = r.column_label;
+			}
+			if (divConfig) {
+				const catCount: Record<string, Set<string>> = {};
+				for (const dc of divConfig) {
+					const key = `${dc.subject_type}_${dc.target_year}`;
+					if (!catCount[key]) catCount[key] = new Set();
+					catCount[key].add(dc.column_label);
+				}
+				for (const [key, labels] of Object.entries(catCount)) {
+					multiColumnCategories4[key] = labels.size > 1;
+				}
+			}
+		}
+
 		return {
 			user: { ...user, id: user.id, db_id: dbUser.id },
 			canVote: false,
@@ -74,7 +106,10 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 			published: false,
 			subjects: [],
 			subjectTypes: [],
-			alreadyVotedTypes: []
+			alreadyVotedTypes: [],
+			enrollments: enrollments4 ?? [],
+			columnLabels: columnLabels4,
+			multiColumnCategories: multiColumnCategories4
 		};
 	}
 
@@ -163,6 +198,38 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 		}
 	}
 
+	const { data: enrollments } = await supabase
+		.from('student_enrollment')
+		.select('subject_id, subject_type, target_year, subjects(name, description)')
+		.eq('student_id', dbUser.id);
+
+	const enrolledSubjectIds = (enrollments ?? []).map((e) => e.subject_id);
+	let columnLabels: Record<string, string> = {};
+	let multiColumnCategories: Record<string, boolean> = {};
+	if (enrolledSubjectIds.length > 0) {
+		const [{ data: divRows }, { data: divConfig }] = await Promise.all([
+			supabase
+				.from('subject_division')
+				.select('subject_id, column_label')
+				.in('subject_id', enrolledSubjectIds),
+			supabase.from('division_config').select('target_year, column_label, subject_type')
+		]);
+		if (divRows) {
+			for (const r of divRows) columnLabels[r.subject_id] = r.column_label;
+		}
+		if (divConfig) {
+			const catCount: Record<string, Set<string>> = {};
+			for (const dc of divConfig) {
+				const key = `${dc.subject_type}_${dc.target_year}`;
+				if (!catCount[key]) catCount[key] = new Set();
+				catCount[key].add(dc.column_label);
+			}
+			for (const [key, labels] of Object.entries(catCount)) {
+				multiColumnCategories[key] = labels.size > 1;
+			}
+		}
+	}
+
 	return {
 		user: { ...user, id: user.id, db_id: dbUser.id },
 		canVote,
@@ -173,6 +240,9 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 		published,
 		subjects,
 		subjectTypes,
-		alreadyVotedTypes
+		alreadyVotedTypes,
+		enrollments: enrollments ?? [],
+		columnLabels,
+		multiColumnCategories
 	};
 };

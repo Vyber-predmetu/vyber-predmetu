@@ -21,4 +21,12 @@ export type PageData = {
 	}>;
 	subjectTypes?: string[];
 	alreadyVotedTypes?: string[];
+	enrollments?: Array<{
+		subject_id: number;
+		subject_type: string;
+		target_year: number;
+		subjects?: { name: string; description: string } | null;
+	}>;
+	columnLabels?: Record<string, string>;
+	multiColumnCategories?: Record<string, boolean>;
 };
