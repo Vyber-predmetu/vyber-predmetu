@@ -132,6 +132,7 @@ export const load: ServerLoad = async ({ parent }: { parent: () => Promise<any> 
 			.from('subjects')
 			.select('id, name, description, subject_type, target_grade')
 			.eq('target_grade', grade + 1)
+			.eq('state', 'accepted')
 			.order('name', { ascending: true });
 		if (!subjectError && subjectData) {
 			subjects = subjectData;
