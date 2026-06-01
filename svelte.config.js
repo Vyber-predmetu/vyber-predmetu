@@ -9,7 +9,7 @@ const config = {
 
 	kit: {
 		adapter: adapter(),
-		csrf: { checkOrigin: false }
+		csrf: { trustedOrigins: ["http://136.244.82.220:3000", "https://stp.ataeva.cz"] }
 	}
 };
 
