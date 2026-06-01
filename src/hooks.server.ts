@@ -1,9 +1,25 @@
 import { env } from "$env/dynamic/public";
 import { createServerClient } from "@supabase/ssr";
-import type { Handle } from "@sveltejs/kit";
+import { error, type Handle } from "@sveltejs/kit";
 import type { Session, User } from '@supabase/supabase-js';
 
-export const handle: Handle = ({ event, resolve }) => {
+const ALLOWED_ORIGINS = [
+    "http://136.244.82.220:3000",
+    "https://stp.ataeva.cz",
+];
+
+const csrfGuard: Handle = ({ event, resolve }) => {
+    const isMutating = ["POST", "PUT", "PATCH", "DELETE"].includes(event.request.method);
+    if (isMutating) {
+        const origin = event.request.headers.get("origin");
+        if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+            error(403, "Cross-site POST form submissions are forbidden");
+        }
+    }
+    return resolve(event);
+};
+
+const supabaseHandle: Handle = ({ event, resolve }) => {
     event.locals.supabase = createServerClient(
         env.PUBLIC_SUPABASE_URL,
         env.PUBLIC_SUPABASE_ANON_KEY,
@@ -51,4 +67,7 @@ export const handle: Handle = ({ event, resolve }) => {
     }
 
     return resolve(event)
-}
+};
+
+export const handle: Handle = ({ event, resolve }) =>
+    csrfGuard({ event, resolve: (e) => supabaseHandle({ event: e, resolve }) });
